@@ -83,7 +83,7 @@ python main.py diagnose --kubeconfig /path/to/your/kubeconfig
 Example:
 
 ```bash
-python main.py diagnose --kubeconfig ~/.kube/dev_blue.yaml
+python main.py diagnose --kubeconfig ~/.kube/dev.yaml
 ```
 
 ---
