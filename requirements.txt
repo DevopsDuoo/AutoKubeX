@@ -1,0 +1,11 @@
+#geminiai
+kubernetes
+requests
+slack-sdk
+streamlit
+typer[all]
+pyyaml
+pytest
+scikit-learn
+joblib
+matplotlib
