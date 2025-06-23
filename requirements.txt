@@ -9,3 +9,5 @@ pytest
 scikit-learn
 joblib
 matplotlib
+httpx
+streamlit-aggrid
