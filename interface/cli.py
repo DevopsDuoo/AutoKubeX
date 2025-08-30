@@ -1,7 +1,9 @@
 import typer
+import json
 from typing import Optional
 from k8s_connector.cluster_connector import load_cluster
 from ai_engine.planner import diagnose_cluster
+from ai_engine.autonomous_agent import run_autonomous_diagnosis, run_continuous_monitoring, AutonomousAgent
 from actions.restarter import restart_pod, delete_pod, restart_deployment, bulk_restart_pods, bulk_delete_pods, bulk_restart_deployments, bulk_delete_deployments, restart_all_pods_in_namespace
 from actions.scaler import scale_deployment, get_current_replicas, list_deployments, bulk_scale_deployments, scale_all_deployments_in_namespace, scale_deployment_by_percentage, bulk_scale_deployments_by_percentage
 from actions.action_handler import get_all_pods, get_all_deployments, get_problematic_pods
@@ -261,6 +263,226 @@ def restart_namespace_cmd(
     typer.echo("-" * 80)
     for pod_name, result in results.items():
         typer.echo(f"{result}")
+
+
+@app.command()
+def autonomous_fix(
+    kubeconfig_path: str = typer.Option(..., "--kubeconfig"),
+    prompt: Optional[str] = typer.Option(None, "--prompt", "-p", help="Custom analysis prompt"),
+    dry_run: bool = typer.Option(True, "--dry-run/--execute", help="Dry run mode (default) or execute actions"),
+    show_safety: bool = typer.Option(False, "--show-safety", help="Show safety constraints")
+):
+    """Run autonomous AI diagnosis and fixes."""
+    load_cluster(kubeconfig_path)
+    
+    if show_safety:
+        agent = AutonomousAgent(dry_run=True)
+        safety_status = agent.get_safety_status()
+        typer.echo("🛡️  Safety Constraints:")
+        typer.echo(f"   Actions per hour: {safety_status['actions_last_hour']}/{safety_status['actions_limit']}")
+        typer.echo(f"   Deletions per hour: {safety_status['deletions_last_hour']}/{safety_status['deletions_limit']}")
+        typer.echo(f"   Protected namespaces: {', '.join(safety_status['protected_namespaces'])}")
+        typer.echo("")
+    
+    mode = "🧪 DRY RUN MODE" if dry_run else "🚀 EXECUTION MODE"
+    typer.echo(f"{mode} - Running autonomous cluster analysis...")
+    
+    result = run_autonomous_diagnosis(prompt, dry_run=dry_run)
+    
+    if 'error' in result:
+        typer.echo(f"❌ Error: {result['error']}")
+        return
+    
+    typer.echo("\n🤖 AI Diagnosis:")
+    typer.echo("-" * 60)
+    typer.echo(result['ai_diagnosis'])
+    
+    if result.get('action_plan'):
+        typer.echo(f"\n🛠️  Action Plan ({len(result['action_plan'])} actions):")
+        typer.echo("-" * 60)
+        
+        for i, action in enumerate(result['execution_results'], 1):
+            status_emoji = {
+                'success': '✅',
+                'failed': '❌', 
+                'blocked': '🚫',
+                'simulated': '🧪'
+            }.get(action['status'], '❓')
+            
+            typer.echo(f"{i}. {status_emoji} {action['action']}")
+            typer.echo(f"   Reason: {action['reason']}")
+            typer.echo(f"   Status: {action['message']}")
+            if action.get('parameters'):
+                typer.echo(f"   Params: {action['parameters']}")
+            typer.echo("")
+    else:
+        typer.echo("\n✅ No issues detected - cluster is healthy!")
+
+
+@app.command()
+def autonomous_monitor(
+    kubeconfig_path: str = typer.Option(..., "--kubeconfig"),
+    interval: int = typer.Option(5, "--interval", help="Check interval in minutes"),
+    cycles: int = typer.Option(10, "--cycles", help="Number of monitoring cycles"),
+    dry_run: bool = typer.Option(True, "--dry-run/--execute", help="Dry run mode (default) or execute actions")
+):
+    """Run continuous autonomous monitoring and fixing."""
+    load_cluster(kubeconfig_path)
+    
+    mode = "🧪 DRY RUN MODE" if dry_run else "🚀 EXECUTION MODE"
+    typer.echo(f"{mode} - Starting continuous autonomous monitoring...")
+    typer.echo(f"📊 Interval: {interval} minutes, Cycles: {cycles}")
+    
+    history = run_continuous_monitoring(
+        interval_minutes=interval,
+        max_iterations=cycles,
+        dry_run=dry_run
+    )
+    
+    typer.echo(f"\n📋 Monitoring completed. Total actions taken: {len(history)}")
+    
+    if history:
+        typer.echo("\n🔍 Action Summary:")
+        for action in history[-5:]:  # Show last 5 actions
+            status_emoji = {
+                'success': '✅',
+                'failed': '❌',
+                'blocked': '🚫', 
+                'simulated': '🧪'
+            }.get(action['status'], '❓')
+            typer.echo(f"  {status_emoji} {action['action']} - {action['message']}")
+
+
+@app.command()
+def ai_analysis(
+    kubeconfig_path: str = typer.Option(..., "--kubeconfig"),
+    output_format: str = typer.Option("summary", "--format", "-f", help="Output format: summary, detailed, json")
+):
+    """Run advanced AI analysis on the cluster using ML libraries."""
+    load_cluster(kubeconfig_path)
+    
+    try:
+        from ai_engine.k8s_ai_analyzer import run_advanced_cluster_analysis
+        
+        typer.echo("🧠 Running advanced AI analysis...")
+        analysis = run_advanced_cluster_analysis()
+        
+        if 'error' in analysis:
+            typer.echo(f"❌ Analysis failed: {analysis['error']}")
+            return
+        
+        if output_format == "json":
+            typer.echo(json.dumps(analysis, indent=2))
+            return
+        
+        # Summary format
+        typer.echo("\n🧠 Advanced AI Analysis Results")
+        typer.echo("=" * 50)
+        
+        # Health score
+        health_score = analysis.get('health_score', {})
+        if health_score:
+            typer.echo(f"\n🏥 Overall Health: {health_score.get('overall', 0):.1f}% (Grade: {health_score.get('grade', 'N/A')})")
+            typer.echo(f"   Pod Health: {health_score.get('pod_health', 0):.1f}%")
+            typer.echo(f"   Deployment Health: {health_score.get('deployment_health', 0):.1f}%")
+            typer.echo(f"   Status: {health_score.get('status', 'Unknown')}")
+        
+        # Critical issues
+        critical_issues = analysis.get('critical_issues', [])
+        if critical_issues:
+            typer.echo(f"\n🚨 Critical Issues ({len(critical_issues)}):")
+            for i, issue in enumerate(critical_issues[:5], 1):
+                severity_emoji = {'critical': '🔴', 'high': '🟠', 'medium': '🟡', 'low': '🟢'}
+                emoji = severity_emoji.get(issue.get('severity', 'low'), '🔵')
+                typer.echo(f"  {i}. {emoji} {issue.get('type', 'Unknown')}: {issue.get('message', 'No details')}")
+                if 'recommended_action' in issue:
+                    typer.echo(f"     → Action: {issue['recommended_action']}")
+        
+        # Anomalies
+        anomalies = analysis.get('anomalies', [])
+        if anomalies:
+            typer.echo(f"\n🎯 ML-Detected Anomalies ({len(anomalies)}):")
+            for i, anomaly in enumerate(anomalies[:3], 1):
+                pod_info = anomaly.get('pod', {})
+                typer.echo(f"  {i}. Pod: {pod_info.get('name')} in {pod_info.get('namespace')}")
+        
+        # Recommendations
+        recommendations = analysis.get('recommendations', [])
+        if recommendations:
+            typer.echo(f"\n💡 AI Recommendations ({len(recommendations)}):")
+            for i, rec in enumerate(recommendations[:3], 1):
+                priority_emoji = {'critical': '🔴', 'high': '🟠', 'medium': '🟡', 'low': '🟢'}
+                emoji = priority_emoji.get(rec.get('priority', 'low'), '🔵')
+                typer.echo(f"  {i}. {emoji} {rec.get('message', 'No details')}")
+        
+        if output_format == "detailed":
+            typer.echo(f"\n📋 Full Analysis:")
+            typer.echo(json.dumps(analysis, indent=2))
+        
+    except Exception as e:
+        typer.echo(f"❌ AI analysis failed: {e}")
+
+
+@app.command() 
+def predictive_analysis(
+    kubeconfig_path: str = typer.Option(..., "--kubeconfig"),
+    deployment: str = typer.Option(None, "--deployment", "-d", help="Specific deployment to analyze"),
+    namespace: str = typer.Option("default", "--namespace", "-n"),
+):
+    """Run predictive analysis for cluster management."""
+    load_cluster(kubeconfig_path)
+    
+    try:
+        from ai_engine.autonomous_agent import AutonomousAgent
+        
+        agent = AutonomousAgent(dry_run=True)
+        insights = agent.get_predictive_insights()
+        
+        typer.echo("🔮 Predictive Analysis Results")
+        typer.echo("=" * 40)
+        
+        if 'error' in insights:
+            typer.echo(f"❌ Analysis failed: {insights['error']}")
+            return
+        
+        # Predicted issues
+        predicted_issues = insights.get('predicted_issues', [])
+        if predicted_issues:
+            typer.echo(f"\n⚠️ Predicted Issues ({len(predicted_issues)}):")
+            for i, issue in enumerate(predicted_issues, 1):
+                typer.echo(f"  {i}. {issue.get('type', 'Unknown')} - Confidence: {issue.get('confidence', 0):.0%}")
+                typer.echo(f"     Timeline: {issue.get('timeline', 'Unknown')}")
+                typer.echo(f"     Resource: {issue.get('resource', 'Unknown')}")
+                typer.echo(f"     Action: {issue.get('action', 'None')}")
+        
+        # Scaling recommendations
+        scaling_recs = insights.get('scaling_recommendations', [])
+        if scaling_recs:
+            typer.echo(f"\n📊 Scaling Recommendations ({len(scaling_recs)}):")
+            for i, rec in enumerate(scaling_recs, 1):
+                typer.echo(f"  {i}. {rec.get('recommendation', 'No details')} - Confidence: {rec.get('confidence', 0):.0%}")
+        
+        # If specific deployment requested, run intelligent scaling
+        if deployment:
+            typer.echo(f"\n🎯 Intelligent Scaling Analysis for {namespace}/{deployment}")
+            try:
+                from actions.ai_action_handler import run_intelligent_scaling
+                scaling_result = run_intelligent_scaling(deployment, namespace)
+                
+                if 'error' not in scaling_result:
+                    rec = scaling_result.get('recommendation', {})
+                    typer.echo(f"   Recommendation: {rec.get('action', 'Unknown')}")
+                    typer.echo(f"   Reason: {rec.get('reason', 'No reason')}")
+                    typer.echo(f"   Confidence: {scaling_result.get('confidence', 0):.0%}")
+                    if 'suggested_replicas' in rec:
+                        typer.echo(f"   Suggested Replicas: {rec['suggested_replicas']}")
+                else:
+                    typer.echo(f"   ❌ Error: {scaling_result['error']}")
+            except Exception as e:
+                typer.echo(f"   ❌ Intelligent scaling failed: {e}")
+        
+    except Exception as e:
+        typer.echo(f"❌ Predictive analysis failed: {e}")
 
 
 def diagnose_cluster_from_path(kubeconfig_path: str, custom_prompt: str = None):

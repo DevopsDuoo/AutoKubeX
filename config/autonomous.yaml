@@ -1,0 +1,49 @@
+# Autonomous AI Configuration
+# This file shows how to configure the autonomous AI agent
+
+autonomous_ai:
+  # Safety settings
+  safety:
+    max_actions_per_hour: 20
+    max_deletions_per_hour: 5
+    protected_namespaces:
+      - "kube-system"
+      - "kube-public" 
+      - "istio-system"
+      - "monitoring"
+    protected_resources:
+      - "coredns"
+      - "kube-proxy"
+      - "etcd"
+      - "prometheus"
+      - "grafana"
+    
+    # Scaling limits
+    max_replicas: 20
+    max_scale_percentage: 300
+    max_bulk_operations: 10
+  
+  # Monitoring settings
+  monitoring:
+    default_interval_minutes: 5
+    default_max_cycles: 12  # 1 hour with 5-min intervals
+    auto_restart_enabled: true
+    auto_scale_enabled: true
+    auto_delete_enabled: false  # More conservative
+  
+  # AI behavior
+  ai_settings:
+    focus_areas:
+      - "high_restart_pods"      # Pods with >5 restarts
+      - "failed_pods"            # Failed/CrashLoopBackOff pods
+      - "zero_replica_deployments" # Deployments with 0 replicas
+      - "resource_issues"        # Resource constraints
+      - "pending_pods"           # Stuck pending pods
+    
+    priority_actions:
+      1: "restart_pod"           # Safest option
+      2: "scale_deployment"      # Restore availability
+      3: "delete_pod"            # Force recreation
+      4: "bulk_operations"       # Efficient for multiple issues
+    
+    conservative_mode: true      # Be more cautious with actions

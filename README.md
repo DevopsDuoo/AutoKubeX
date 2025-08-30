@@ -1,10 +1,17 @@
 # 🤖 AutoKubeX - AI-Powered Kubernetes Cluster Manager
 
-AutoKubeX is an intelligent assistant that connects to any Kubernetes cluster and diagnoses issues using AI (Gemini or OpenAI). It features automatic session persistence, bulk operations, and advanced scaling capabilities through both CLI and web interfaces.
+AutoKubeX is an intelligent assistant that connects to any Kubernetes cluster and provides AI-powered diagnosis, **autonomous issue resolution**, and advanced cluster management through both CLI and web interfaces.
 
 ---
 
 ## 🚀 Key Features
+
+### 🤖 **NEW: Autonomous AI Management**
+- **Self-Healing Clusters**: AI automatically detects and fixes issues
+- **Safe Execution**: Built-in safety constraints and dry-run mode
+- **Continuous Monitoring**: 24/7 autonomous cluster health management
+- **Smart Actions**: AI plans and executes restart, scaling, and deletion operations
+- **Safety Limits**: Rate limiting, protected namespaces, and audit logging
 
 ### 🔍 AI-Powered Diagnosis
 - **Intelligent Analysis**: AI-based diagnosis for cluster health using Gemini/OpenAI
@@ -23,10 +30,10 @@ AutoKubeX is an intelligent assistant that connects to any Kubernetes cluster an
 - **Label Selectors**: Target specific resources using Kubernetes labels
 - **Safety Features**: Error isolation, minimum replica enforcement
 
-### 🖥️ Dual Interface
-- **Web UI**: Clean Streamlit dashboard with automatic persistence
+### 🖥️ Triple Interface
+- **Web UI**: Clean Streamlit dashboard with autonomous AI tab
 - **CLI**: Comprehensive command-line interface for automation
-- **Unified Experience**: Consistent functionality across both interfaces
+- **Autonomous Script**: Standalone autonomous management script
 
 ---
 
@@ -103,6 +110,35 @@ python main.py bulk-scale-cmd --kubeconfig /path/to/kubeconfig --namespace defau
 python main.py scale-all-cmd --kubeconfig /path/to/kubeconfig --namespace staging --replicas 1
 python main.py scale-by-percentage-cmd --kubeconfig /path/to/kubeconfig --namespace default --deployment api --percentage 1.5
 ```
+
+### 🤖 Autonomous AI Management
+
+**Let AI automatically detect and fix cluster issues:**
+
+```bash
+# Safe analysis - see what AI would fix
+python autonomous.py --kubeconfig /path/to/config --mode single --dry-run
+
+# Execute fixes automatically  
+python autonomous.py --kubeconfig /path/to/config --mode single --execute
+
+# Continuous monitoring (1 hour)
+python autonomous.py --kubeconfig /path/to/config --mode monitor --interval 5 --cycles 12 --execute
+
+# Custom focus areas
+python autonomous.py --kubeconfig /path/to/config --prompt "Focus on performance and scaling issues" --execute
+
+# Show safety constraints
+python autonomous.py --kubeconfig /path/to/config --show-safety
+```
+
+**Web UI Autonomous Tab:**
+- Navigate to **"🤖 Autonomous AI"** tab in the web interface
+- Review safety constraints and execution modes
+- Let AI analyze and automatically fix cluster issues
+- Monitor execution results and action history
+
+> **💡 Tip**: See `AUTONOMOUS_AI.md` for complete autonomous features documentation
 
 > **💡 Tip**: See `ACTIONS_GUIDE.md` for comprehensive CLI documentation
 

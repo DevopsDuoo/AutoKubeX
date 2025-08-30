@@ -1,2 +1,35 @@
-gemini_api_key: "AIzaSyCzd5GtRO8Sg4QnsBj85Ke8TubVTPUeQZk"
+# AutoKubeX Configuration
+# Local AI-powered cluster management (no external API keys required)
+
+# Kubernetes Configuration
+kubernetes:
+  auto_detect_kubeconfig: true
+  default_kubeconfig_paths:
+    - "${KUBECONFIG}"
+    - "~/.kube/config"
+    - "/Users/hrushi/DevBoxLite/mixed-os-cluster-config.yaml"
+
+# Local AI Engine Settings
+local_ai:
+  enabled: true
+  analysis_depth: "comprehensive"
+  confidence_threshold: 0.7
+
+# Monitoring Integration
 prometheus_url: "http://localhost:9090"
+
+# Safety Controls
+safety:
+  max_actions_per_hour: 20
+  max_deletions_per_hour: 5
+  protected_namespaces:
+    - "kube-system"
+    - "kube-public" 
+    - "prometheus"
+
+# Advanced AI Features
+ai_features:
+  anomaly_detection: true
+  predictive_analysis: true
+  topology_analysis: true
+  intelligent_scaling: true

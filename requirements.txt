@@ -12,3 +12,36 @@ matplotlib
 httpx
 streamlit-aggrid
 pandas
+
+# Kubernetes AI & Analytics Libraries
+prometheus-client>=0.17.0
+kubernetes-asyncio>=24.2.0
+kube-score>=1.16.1
+kubeflow-katib>=0.16.0
+numpy>=1.24.0
+scipy>=1.10.0
+plotly>=5.15.0
+seaborn>=0.12.0
+networkx>=3.1
+psutil>=5.9.0
+
+# Advanced ML & Time Series
+prophet>=1.1.4
+tensorflow>=2.13.0
+torch>=2.0.0
+transformers>=4.30.0
+optuna>=3.2.0
+
+# Monitoring & Observability
+prometheus-api-client>=0.5.3
+grafana-api>=1.0.3
+elastic-apm>=6.15.0
+
+# Resource Analysis
+resource-analyzer>=1.0.0
+cluster-analyzer>=2.1.0
+
+# Time Series & Anomaly Detection
+statsmodels>=0.14.0
+pyod>=1.1.0
+adtk>=0.6.2
